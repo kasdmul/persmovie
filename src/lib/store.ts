@@ -1,3 +1,4 @@
+
 'use client';
 
 import type React from 'react';
@@ -137,18 +138,26 @@ let listeners: React.Dispatch<React.SetStateAction<number>>[] = [];
 let dataIsLoaded = false;
 let dataIsLoading = false;
 let saveTimeout: NodeJS.Timeout | null = null;
+const LOCAL_STORAGE_KEY = 'rh-insights-data';
 
 async function loadData() {
   if (dataIsLoaded || dataIsLoading) return;
   dataIsLoading = true;
   try {
-    const response = await fetch('/api/data');
-    // The API route is now designed to always return a valid JSON response,
-    // so we can be more confident in parsing it.
-    const dataFromServer = await response.json();
-    store = { ...initialData, ...dataFromServer };
+    const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (savedData) {
+      store = JSON.parse(savedData);
+    } else {
+      // First time load: fetch from the initial db.json via the API
+      const response = await fetch('/api/data');
+      const dataFromServer = await response.json();
+      store = { ...initialData, ...dataFromServer };
+      // Save this initial state to localStorage for next time
+      const initialStoreToSave = { ...store, currentUser: null };
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(initialStoreToSave));
+    }
   } catch (error) {
-    console.error("Couldn't load data from server, using initial data.", error);
+    console.error("Couldn't load data, using initial data.", error);
     store = { ...initialData };
   } finally {
     dataIsLoaded = true;
@@ -159,16 +168,15 @@ async function loadData() {
 }
 
 
-async function saveData() {
+function saveData() {
+  if (!dataIsLoaded) return; // Don't save if data hasn't been loaded yet.
   try {
     const dataToSave = JSON.parse(JSON.stringify(store));
-    await fetch('/api/data', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dataToSave),
-    });
+    // We don't want to save the current user to localStorage across sessions
+    dataToSave.currentUser = null;
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataToSave));
   } catch (error) {
-    console.error("Couldn't save data to server.", error);
+    console.error("Couldn't save data to localStorage.", error);
   }
 }
 
