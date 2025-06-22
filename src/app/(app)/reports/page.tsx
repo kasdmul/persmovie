@@ -21,6 +21,7 @@ import {
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Legend } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { endOfMonth, endOfYear, getYear, startOfYear } from 'date-fns';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const chartConfig = {
   Homme: {
@@ -88,15 +89,30 @@ const aggregateDataByDimension = (employees: Employee[], dimension: 'entite' | '
   return Object.values(aggregation).sort((a,b) => a.name.localeCompare(b.name));
 };
 
+function ReportsSkeleton() {
+  return (
+    <div className="flex flex-col gap-6">
+      <Card><CardHeader><Skeleton className="h-8 w-48" /></CardHeader></Card>
+      <Skeleton className="h-[400px] w-full rounded-lg" />
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <Skeleton className="h-[400px] w-full rounded-lg" />
+        <Skeleton className="h-[400px] w-full rounded-lg" />
+      </div>
+    </div>
+  )
+}
+
 export default function ReportsPage() {
   useStore();
-
+  const [isClient, setIsClient] = React.useState(false);
   const [selectedYear, setSelectedYear] = React.useState<string>(new Date().getFullYear().toString());
+  
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const availableYears = React.useMemo(() => {
     const years = new Set<number>();
-    years.add(new Date().getFullYear());
-
     store.employees.forEach(e => {
       const hireDate = parseFlexibleDate(e.dateEmbauche);
       if (hireDate) years.add(getYear(hireDate));
@@ -105,49 +121,41 @@ export default function ReportsPage() {
         if (departureDate) years.add(getYear(departureDate));
       }
     });
-    
-    return Array.from(years).sort((a, b) => b - a);
+    const allYears = Array.from(years).sort((a, b) => b - a);
+    if (!allYears.includes(new Date().getFullYear())) {
+        allYears.unshift(new Date().getFullYear());
+    }
+    return allYears;
   }, [store.employees]);
+  
+  if (!isClient) {
+    return <ReportsSkeleton />;
+  }
   
   const yearNumber = parseInt(selectedYear, 10);
   
-  const employeesActiveInYear = React.useMemo(() => {
-    if (isNaN(yearNumber)) return [];
-    const yearStartDate = startOfYear(new Date(yearNumber, 0, 1));
-    const yearEndDate = endOfYear(new Date(yearNumber, 0, 1));
+  const employeesActiveInYear = store.employees.filter(e => {
+      const hireDate = parseFlexibleDate(e.dateEmbauche);
+      if (!hireDate || getYear(hireDate) > yearNumber) return false;
+      if (e.status === 'Parti') {
+          const departureDate = parseFlexibleDate(e.dateDepart || '');
+          if (departureDate && getYear(departureDate) < yearNumber) return false;
+      }
+      return true;
+  });
 
-    return store.employees.filter(e => {
-        const hireDate = parseFlexibleDate(e.dateEmbauche);
-        if (!hireDate || hireDate > yearEndDate) {
-            return false;
-        }
-        if (e.status === 'Parti') {
-            const departureDate = parseFlexibleDate(e.dateDepart || '');
-            if (departureDate && departureDate < yearStartDate) {
-                return false;
-            }
-        }
-        return true;
-    });
-  }, [store.employees, yearNumber]);
-
-  const monthlyData = React.useMemo(() => {
+  const monthlyData = (() => {
     if (isNaN(yearNumber)) return [];
-    const monthNames = [
-      'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin',
-      'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc',
-    ];
+    const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
     
     return monthNames.map((name, index) => {
         const monthEndDate = endOfMonth(new Date(yearNumber, index, 1));
         const activeThisMonth = store.employees.filter(e => {
             const hireDate = parseFlexibleDate(e.dateEmbauche);
-            if (!hireDate || hireDate > monthEndDate) {
-                return false;
-            }
+            if (!hireDate || hireDate > monthEndDate) return false;
             if (e.status === 'Parti') {
                 const departureDate = parseFlexibleDate(e.dateDepart || '');
-                if (departureDate && departureDate <= monthEndDate) {
+                if (departureDate && departureDate < monthEndDate) {
                     return false;
                 }
             }
@@ -160,11 +168,11 @@ export default function ReportsPage() {
             Femme: activeThisMonth.filter(e => e.sexe === 'Femme').length,
         }
     });
-  }, [store.employees, yearNumber]);
+  })();
 
-  const dataByEntity = React.useMemo(() => aggregateDataByDimension(employeesActiveInYear, 'entite'), [employeesActiveInYear]);
-  const dataByDepartment = React.useMemo(() => aggregateDataByDimension(employeesActiveInYear, 'departement'), [employeesActiveInYear]);
-  const dataByWorkLocation = React.useMemo(() => aggregateDataByDimension(employeesActiveInYear, 'lieuTravail'), [employeesActiveInYear]);
+  const dataByEntity = aggregateDataByDimension(employeesActiveInYear, 'entite');
+  const dataByDepartment = aggregateDataByDimension(employeesActiveInYear, 'departement');
+  const dataByWorkLocation = aggregateDataByDimension(employeesActiveInYear, 'lieuTravail');
 
   const renderChart = (data: typeof dataByEntity, title: string, description: string) => (
     <Card>
