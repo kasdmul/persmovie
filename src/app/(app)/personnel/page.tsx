@@ -75,11 +75,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import Papa from 'papaparse';
+import { useToast } from '@/hooks/use-toast';
+import { useDebounce } from '@/hooks/use-debounce';
 
 export default function PersonnelPage() {
   const { currentUser } = useStore();
+  const { toast } = useToast();
 
   const [searchTerm, setSearchTerm] = React.useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [editingEmployee, setEditingEmployee] = React.useState<Employee | null>(
     null
@@ -140,7 +144,7 @@ export default function PersonnelPage() {
           const importedData = results.data;
           if (!importedData || !Array.isArray(importedData)) {
             console.error('Invalid CSV data received');
-            alert('Données CSV invalides reçues.');
+            toast({ variant: "destructive", title: "Erreur d'importation", description: "Les données du fichier CSV semblent invalides." });
             return;
           }
 
@@ -211,13 +215,9 @@ export default function PersonnelPage() {
             store.workLocations = Array.from(allWorkLocations).sort();
             
             notify();
-            alert(
-              `${uniqueNewEmployees.length} employé(s) importé(s) avec succès !`
-            );
+            toast({ title: "Importation réussie", description: `${uniqueNewEmployees.length} employé(s) ont été importés avec succès.` });
           } else {
-            alert(
-              'Aucun nouvel employé à importer ou les données sont invalides/dupliquées.'
-            );
+            toast({ title: "Importation", description: "Aucun nouvel employé à importer. Les données peuvent être des doublons ou invalides." });
           }
           
           if (csvInputRef.current) {
@@ -226,7 +226,7 @@ export default function PersonnelPage() {
         },
         error: (error) => {
           console.error("Erreur d'analyse CSV:", error);
-          alert("Une erreur est survenue lors de l'analyse du fichier CSV.");
+          toast({ variant: "destructive", title: "Erreur d'importation", description: "Une erreur est survenue lors de l'analyse du fichier CSV." });
         }
       });
     }
@@ -374,17 +374,19 @@ export default function PersonnelPage() {
     }
   };
 
-  const filteredEmployees = store.employees.filter(
-    (employee) =>
-      employee.noms.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.sexe.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.entite.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.departement.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.lieuTravail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.poste.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.status.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredEmployees = React.useMemo(() => {
+    return store.employees.filter(
+      (employee) =>
+        employee.noms.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        employee.email.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        employee.sexe.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        employee.entite.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        employee.departement.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        employee.lieuTravail.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        employee.poste.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        employee.status.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+    );
+  }, [store.employees, debouncedSearchTerm]);
 
   return (
     <>
