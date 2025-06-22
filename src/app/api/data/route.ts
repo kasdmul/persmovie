@@ -1,12 +1,9 @@
 
 import { NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
+import initialDbData from '../../../../db.json';
 
 // This route now ONLY serves the initial seed data from the committed db.json
 // It does not handle saving data anymore, as that's done in localStorage.
-
-const dbPath = path.join(process.cwd(), 'db.json');
 
 const emptyData = {
     employees: [],
@@ -26,23 +23,20 @@ const emptyData = {
 
 async function getInitialData() {
   try {
-    // This reads the db.json that is committed to your repository.
-    const fileContents = await fs.readFile(dbPath, 'utf8');
-    return JSON.parse(fileContents);
+    // The data is now imported directly, which is safer for build environments.
+    return initialDbData;
   } catch (error) {
-    console.error('Could not read initial db.json, returning empty data structure.', error);
-    // If db.json doesn't exist for some reason, return a safe default.
+    console.error('Could not access initial db.json data, returning empty data structure.', error);
+    // If db.json can't be imported for some reason, return a safe default.
     return emptyData;
   }
 }
 
 export async function GET() {
   const data = await getInitialData();
-  // Ensure currentUser is not part of the initial seed data.
+  // Ensure currentUser is not part of the initial seed data for security.
   if (data.currentUser) {
     data.currentUser = null;
   }
   return NextResponse.json(data);
 }
-
-// The POST method is no longer needed as data is persisted in the browser's localStorage.
