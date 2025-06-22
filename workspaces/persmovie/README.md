@@ -2,7 +2,9 @@
 
 This is a NextJS starter in Firebase Studio.
 
-Let's trigger a new build!
+To get started, take a look at src/app/page.tsx.
 
----
-This is a new line to force a build on Firebase.
+Happy coding!
+
+--- BUILD FIX ATTEMPT ---
+This line confirms that file changes are now working.
