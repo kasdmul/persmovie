@@ -36,36 +36,33 @@ const chartConfig = {
 
 function parseFlexibleDate(dateString: string): Date | null {
   if (!dateString) return null;
+  const trimmedDateString = dateString.trim();
 
-  try {
-    const parts = dateString.split('/');
-    if (parts.length === 3) {
-      const d = new Date(
-        parseInt(parts[2], 10),
-        parseInt(parts[1], 10) - 1,
-        parseInt(parts[0], 10)
-      );
-      if (!isNaN(d.getTime())) {
-        if (
-          d.getFullYear() === parseInt(parts[2], 10) &&
-          d.getMonth() === parseInt(parts[1], 10) - 1 &&
-          d.getDate() === parseInt(parts[0], 10)
-        ) {
-          return d;
+  // Try dd/MM/yyyy format first
+  const parts = trimmedDateString.split('/');
+  if (parts.length === 3) {
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const year = parseInt(parts[2], 10);
+    
+    // Basic validation for dd/MM/yyyy
+    if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+        const d = new Date(year, month - 1, day);
+        // Check if the created date is valid and matches the input parts
+        if (d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day) {
+            return d;
         }
-      }
     }
-  } catch (e) {
-    /* ignore parse error */
   }
 
+  // Fallback for other formats that new Date() can handle
   try {
-    const d = new Date(dateString);
+    const d = new Date(trimmedDateString);
     if (!isNaN(d.getTime())) {
       return d;
     }
   } catch (e) {
-    /* ignore parse error */
+    // Ignore parsing errors
   }
 
   return null;
