@@ -50,14 +50,7 @@ async function getData() {
 
 export async function GET() {
   const data = await getData();
-  // Never send passwords to the client.
-  // And currentUser should be managed client-side.
-  if (data.users) {
-      data.users = data.users.map((user: any) => {
-          const { password, ...rest } = user;
-          return rest;
-      });
-  }
+  // currentUser should be managed client-side.
   data.currentUser = null;
   return NextResponse.json(data);
 }
