@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -90,35 +89,10 @@ export default function DashboardPage() {
   React.useEffect(() => {
     setIsClient(true);
   }, []);
-
-  if (!isClient) {
-    return (
-      <div className="flex flex-col gap-6">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-[108px] rounded-lg" />)}
-        </div>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <Skeleton className="h-[200px] rounded-lg" />
-          <Skeleton className="h-[200px] rounded-lg" />
-        </div>
-        <div className="grid gap-6 md:grid-cols-2">
-          <Skeleton className="h-[108px] rounded-lg" />
-          <Skeleton className="h-[108px] rounded-lg" />
-        </div>
-        <div className="grid grid-cols-1 gap-6">
-          <Skeleton className="h-[380px] rounded-lg" />
-        </div>
-      </div>
-    );
-  }
-
+  
   const today = new Date();
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth();
-
-  const totalEmployees = store.employees.filter(
-    (e) => e.status === 'Actif'
-  ).length;
 
   const newHiresThisYear = React.useMemo(() => {
     return store.employees.filter((employee) => {
@@ -136,15 +110,7 @@ export default function DashboardPage() {
       return departureDate.getFullYear() === currentYear;
     }).length;
   }, [store.employees, currentYear]);
-
-  const employeesAtStartOfYear =
-    totalEmployees - newHiresThisYear + departuresThisYear;
-  const averageEmployeesYear = (employeesAtStartOfYear + totalEmployees) / 2;
-  const turnoverRateYearly =
-    averageEmployeesYear > 0
-      ? (departuresThisYear / averageEmployeesYear) * 100
-      : 0;
-
+  
   const newHiresThisMonth = React.useMemo(() => {
     return store.employees.filter((employee) => {
       const hireDate = parseFlexibleDate(employee.dateEmbauche);
@@ -168,14 +134,6 @@ export default function DashboardPage() {
     }).length;
   }, [store.employees, currentYear, currentMonth]);
 
-  const employeesAtStartOfMonth =
-    totalEmployees - newHiresThisMonth + departuresThisMonth;
-  const averageEmployeesMonth = (employeesAtStartOfMonth + totalEmployees) / 2;
-  const turnoverRateMonthly =
-    averageEmployeesMonth > 0
-      ? (departuresThisMonth / averageEmployeesMonth) * 100
-      : 0;
-
   const openPositions = React.useMemo(() => {
     return store.openPositions.filter((p) => p.status === 'Ouvert').length;
   }, [store.openPositions]);
@@ -189,7 +147,7 @@ export default function DashboardPage() {
     );
     return departments.size;
   }, [store.employees]);
-
+  
   const monthlyMovements = React.useMemo(() => {
     const monthNames = [
       'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin',
@@ -286,6 +244,46 @@ export default function DashboardPage() {
     return alerts.sort((a, b) => b.duration - a.duration);
   }, [store.employees, store.workLocationHistory]);
 
+  if (!isClient) {
+    return (
+      <div className="flex flex-col gap-6">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-[108px] rounded-lg" />)}
+        </div>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <Skeleton className="h-[200px] rounded-lg" />
+          <Skeleton className="h-[200px] rounded-lg" />
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          <Skeleton className="h-[108px] rounded-lg" />
+          <Skeleton className="h-[108px] rounded-lg" />
+        </div>
+        <div className="grid grid-cols-1 gap-6">
+          <Skeleton className="h-[380px] rounded-lg" />
+        </div>
+      </div>
+    );
+  }
+
+  const totalEmployees = store.employees.filter(
+    (e) => e.status === 'Actif'
+  ).length;
+
+  const employeesAtStartOfYear =
+    totalEmployees - newHiresThisYear + departuresThisYear;
+  const averageEmployeesYear = (employeesAtStartOfYear + totalEmployees) / 2;
+  const turnoverRateYearly =
+    averageEmployeesYear > 0
+      ? (departuresThisYear / averageEmployeesYear) * 100
+      : 0;
+      
+  const employeesAtStartOfMonth =
+    totalEmployees - newHiresThisMonth + departuresThisMonth;
+  const averageEmployeesMonth = (employeesAtStartOfMonth + totalEmployees) / 2;
+  const turnoverRateMonthly =
+    averageEmployeesMonth > 0
+      ? (departuresThisMonth / averageEmployeesMonth) * 100
+      : 0;
 
   return (
     <div className="flex flex-col gap-6">
