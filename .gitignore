@@ -1,19 +1,16 @@
-# Dependencies
-/node_modules
-/.pnp
-.pnp.js
-.yarn/install-state.gz
+# IDE and system files
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store
 
 # Next.js build output
-/.next/
-/out/
+.next/
+out/
 
-# Production build
-/build
-
-# Miscellaneous
-.DS_Store
-*.pem
+# Dependency directories
+node_modules/
 
 # Log files
 npm-debug.log*
@@ -22,26 +19,12 @@ yarn-error.log*
 pnpm-debug.log*
 
 # Local environment variables
-.env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-# Vercel (good practice)
-.vercel
-
-# TypeScript cache
-*.tsbuildinfo
-
-# Editor-specific
-.vscode/*
-!.vscode/settings.json
-
-# Problematic directories to ignore
+# Extraneous directories causing build issues
 /workspace/
 /workspaces/
 /data/
-
-# Don't track next-env.d.ts, it's generated
-next-env.d.ts
