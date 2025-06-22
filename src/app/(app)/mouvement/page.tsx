@@ -17,10 +17,12 @@ import { cn } from '@/lib/utils';
 import { store, notify, useStore, SalaryChange, FunctionChange, ContractChange, DepartmentChange, EntityChange, Employee, WorkLocationChange } from '@/lib/store';
 import Papa from 'papaparse';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useToast } from '@/hooks/use-toast';
 
 
 function SalaryChangeContent() {
-  useStore(); // Subscribe to store updates
+  useStore();
+  const { toast } = useToast();
 
   const [selectedMatricule, setSelectedMatricule] = React.useState<string | undefined>();
   const [date, setDate] = React.useState<Date | undefined>(new Date());
@@ -38,13 +40,13 @@ function SalaryChangeContent() {
 
   const handleApplyChange = () => {
     if (!selectedEmployee || !newSalary || !reason || !date) {
-      alert('Veuillez remplir tous les champs obligatoires.');
+      toast({ variant: 'destructive', description: 'Veuillez remplir tous les champs obligatoires.' });
       return;
     }
 
     const newSalaryValue = parseFloat(newSalary);
     if (isNaN(newSalaryValue)) {
-      alert('Le nouveau salaire doit être un nombre.');
+      toast({ variant: 'destructive', description: 'Le nouveau salaire doit être un nombre.' });
       return;
     }
 
@@ -185,6 +187,7 @@ function SalaryChangeContent() {
 
 function FunctionChangeContent() {
   useStore();
+  const { toast } = useToast();
 
   const [selectedMatricule, setSelectedMatricule] = React.useState<string | undefined>();
   const [date, setDate] = React.useState<Date | undefined>(new Date());
@@ -202,7 +205,7 @@ function FunctionChangeContent() {
 
   const handleApplyChange = () => {
     if (!selectedEmployee || !newFunction || !reason || !date) {
-      alert('Veuillez remplir tous les champs obligatoires.');
+      toast({ variant: 'destructive', description: 'Veuillez remplir tous les champs obligatoires.' });
       return;
     }
 
@@ -339,6 +342,7 @@ function FunctionChangeContent() {
 
 function ContractChangeContent() {
   useStore();
+  const { toast } = useToast();
 
   const [selectedMatricule, setSelectedMatricule] = React.useState<string | undefined>();
   const [date, setDate] = React.useState<Date | undefined>(new Date());
@@ -356,7 +360,7 @@ function ContractChangeContent() {
 
   const handleApplyChange = () => {
     if (!selectedEmployee || !newContractType || !reason || !date) {
-      alert('Veuillez remplir tous les champs obligatoires.');
+      toast({ variant: 'destructive', description: 'Veuillez remplir tous les champs obligatoires.' });
       return;
     }
 
@@ -504,6 +508,7 @@ function ContractChangeContent() {
 
 function DepartmentChangeContent() {
   useStore();
+  const { toast } = useToast();
 
   const [selectedMatricule, setSelectedMatricule] = React.useState<string | undefined>();
   const [date, setDate] = React.useState<Date | undefined>(new Date());
@@ -521,7 +526,7 @@ function DepartmentChangeContent() {
 
   const handleApplyChange = () => {
     if (!selectedEmployee || !newDepartment || !reason || !date) {
-      alert('Veuillez remplir tous les champs obligatoires.');
+      toast({ variant: 'destructive', description: 'Veuillez remplir tous les champs obligatoires.' });
       return;
     }
 
@@ -667,6 +672,7 @@ function DepartmentChangeContent() {
 
 function EntityChangeContent() {
   useStore();
+  const { toast } = useToast();
 
   const [selectedMatricule, setSelectedMatricule] = React.useState<string | undefined>();
   const [date, setDate] = React.useState<Date | undefined>(new Date());
@@ -684,7 +690,7 @@ function EntityChangeContent() {
 
   const handleApplyChange = () => {
     if (!selectedEmployee || !newEntity || !reason || !date) {
-      alert('Veuillez remplir tous les champs obligatoires.');
+      toast({ variant: 'destructive', description: 'Veuillez remplir tous les champs obligatoires.' });
       return;
     }
 
@@ -830,6 +836,7 @@ function EntityChangeContent() {
 
 function WorkLocationChangeContent() {
   useStore();
+  const { toast } = useToast();
 
   const [selectedMatricule, setSelectedMatricule] = React.useState<string | undefined>();
   const [date, setDate] = React.useState<Date | undefined>(new Date());
@@ -853,7 +860,7 @@ function WorkLocationChangeContent() {
 
   const handleApplyChange = () => {
     if (!selectedEmployee || !newWorkLocation || !reason || !date) {
-      alert('Veuillez remplir tous les champs obligatoires.');
+      toast({ variant: 'destructive', description: 'Veuillez remplir tous les champs obligatoires.' });
       return;
     }
 
@@ -1035,23 +1042,32 @@ function GlobalHistoryContent() {
     return value;
   };
 
-  const allHistory: GlobalHistoryItem[] = [
+  const allHistory: GlobalHistoryItem[] = React.useMemo(() => {
+    return [
       ...store.salaryHistory.map(item => ({ ...item, type: 'Changement de Salaire' })),
       ...store.functionHistory.map(item => ({ ...item, type: 'Changement de Fonction' })),
       ...store.contractHistory.map(item => ({ ...item, type: 'Changement de Contrat' })),
       ...store.departmentHistory.map(item => ({ ...item, type: 'Changement de Département' })),
       ...store.entityHistory.map(item => ({ ...item, type: 'Changement d\'Entité' })),
       ...store.workLocationHistory.map(item => ({ ...item, type: 'Changement de Lieu de Travail' })),
-  ].sort((a, b) => {
-      try {
-        const dateA = new Date(a.date.split('/').reverse().join('-')).getTime();
-        const dateB = new Date(b.date.split('/').reverse().join('-')).getTime();
-        if (isNaN(dateA) || isNaN(dateB)) return 0;
-        return dateB - dateA;
-      } catch (e) {
-        return 0;
-      }
-  });
+    ].sort((a, b) => {
+        try {
+          const dateA = new Date(a.date.split('/').reverse().join('-')).getTime();
+          const dateB = new Date(b.date.split('/').reverse().join('-')).getTime();
+          if (isNaN(dateA) || isNaN(dateB)) return 0;
+          return dateB - dateA;
+        } catch (e) {
+          return 0;
+        }
+    });
+  }, [
+    store.salaryHistory, 
+    store.functionHistory, 
+    store.contractHistory, 
+    store.departmentHistory, 
+    store.entityHistory, 
+    store.workLocationHistory
+  ]);
 
   const handleExport = () => {
     if (allHistory.length === 0) return;
