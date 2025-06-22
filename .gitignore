@@ -1,30 +1,18 @@
-# IDE and system files
-.idea/
+# IDE specific
 .vscode/
-*.swp
-*~
-.DS_Store
+workspace/
+workspaces/
 
-# Next.js build output
+# Next.js
 .next/
 out/
 
-# Dependency directories
+# Dependencies
 node_modules/
 
-# Log files
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
-# Local environment variables
+# Env
+.env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-
-# Extraneous directories causing build issues
-/workspace/
-/workspaces/
-/data/
