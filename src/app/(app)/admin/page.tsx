@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -55,12 +54,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useToast } from '@/hooks/use-toast';
 import { notify, store, useStore, type User } from '@/lib/store';
 import { MoreHorizontal, PlusCircle, Trash2 } from 'lucide-react';
 import React from 'react';
 
 export default function AdminPage() {
   useStore();
+  const { toast } = useToast();
   const { currentUser } = store;
 
   const [isAddUserOpen, setIsAddUserOpen] = React.useState(false);
@@ -90,7 +91,7 @@ export default function AdminPage() {
       });
     }
   }, [editingUser]);
-  
+
   const handleEditFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setEditForm((prev) => ({ ...prev, [name]: value }));
@@ -111,7 +112,10 @@ export default function AdminPage() {
   const handleAddUser = (event: React.FormEvent) => {
     event.preventDefault();
     if (!newUserName || !newUserEmail || !newUserRole || !newUserPassword) {
-      alert('Veuillez remplir tous les champs.');
+      toast({
+        variant: 'destructive',
+        description: 'Veuillez remplir tous les champs.',
+      });
       return;
     }
     const newUser: User = {
@@ -137,14 +141,21 @@ export default function AdminPage() {
   };
 
   const handleDeleteUser = (email: string) => {
-    const userToDelete = store.users.find(u => u.email === email);
+    const userToDelete = store.users.find((u) => u.email === email);
     if (!userToDelete) return;
 
-    const isLastSuperAdmin = userToDelete.role === 'superadmin' && store.users.filter(u => u.role === 'superadmin').length === 1;
+    const isLastSuperAdmin =
+      userToDelete.role === 'superadmin' &&
+      store.users.filter((u) => u.role === 'superadmin').length === 1;
 
     if (isLastSuperAdmin) {
-        alert("Vous ne pouvez pas supprimer le dernier super administrateur. Utilisez 'Tout supprimer' pour réinitialiser l'application.");
-        return;
+      toast({
+        variant: 'destructive',
+        title: 'Opération non autorisée',
+        description:
+          "Vous ne pouvez pas supprimer le dernier super administrateur. Utilisez 'Tout supprimer' pour réinitialiser l'application.",
+      });
+      return;
     }
 
     store.users = store.users.filter((u) => u.email !== email);
@@ -165,7 +176,11 @@ export default function AdminPage() {
       currentUser?.role === 'admin' &&
       (editingUser.role === 'superadmin' || editingUser.role === 'admin')
     ) {
-      alert("Vous n'avez pas la permission de modifier cet utilisateur.");
+      toast({
+        variant: 'destructive',
+        title: 'Permission refusée',
+        description: "Vous n'avez pas la permission de modifier cet utilisateur.",
+      });
       return;
     }
 
@@ -173,7 +188,11 @@ export default function AdminPage() {
       editForm.email !== editingUser.email &&
       store.users.some((user) => user.email === editForm.email)
     ) {
-      alert('Cette adresse e-mail est déjà utilisée par un autre compte.');
+      toast({
+        variant: 'destructive',
+        title: 'Email en conflit',
+        description: 'Cette adresse e-mail est déjà utilisée par un autre compte.',
+      });
       return;
     }
 
@@ -197,10 +216,11 @@ export default function AdminPage() {
     setEditingUser(null);
   };
 
-  const displayedUsers =
-    store.currentUser?.role === 'admin'
+  const displayedUsers = React.useMemo(() => {
+    return currentUser?.role === 'admin'
       ? store.users.filter((u) => u.role !== 'superadmin')
       : store.users;
+  }, [currentUser?.role, store.users]);
 
   const canManage =
     currentUser?.role === 'superadmin' || currentUser?.role === 'admin';
