@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -1230,25 +1231,25 @@ export default function MouvementPageContainer() {
             Historique Global
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="salaire">
+        <TabsContent value="salaire" forceMount>
           <SalaryChangeContent />
         </TabsContent>
-        <TabsContent value="fonction">
+        <TabsContent value="fonction" forceMount>
           <FunctionChangeContent />
         </TabsContent>
-         <TabsContent value="departement">
+         <TabsContent value="departement" forceMount>
           <DepartmentChangeContent />
         </TabsContent>
-        <TabsContent value="entite">
+        <TabsContent value="entite" forceMount>
           <EntityChangeContent />
         </TabsContent>
-        <TabsContent value="lieu-travail">
+        <TabsContent value="lieu-travail" forceMount>
           <WorkLocationChangeContent />
         </TabsContent>
-        <TabsContent value="contrat">
+        <TabsContent value="contrat" forceMount>
           <ContractChangeContent />
         </TabsContent>
-        <TabsContent value="historique">
+        <TabsContent value="historique" forceMount>
           <GlobalHistoryContent />
         </TabsContent>
       </Tabs>
