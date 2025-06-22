@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Legend } from 'recharts';
 import { addMonths, differenceInDays, format, differenceInMonths } from 'date-fns';
+import { Skeleton } from '@/components/ui/skeleton';
 
 /**
  * Parses a date string from various common formats. More robustly.
@@ -84,6 +85,32 @@ const chartConfig = {
 
 export default function DashboardPage() {
   useStore(); // Subscribe to store changes
+  const [isClient, setIsClient] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return (
+      <div className="flex flex-col gap-6">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-[108px] rounded-lg" />)}
+        </div>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <Skeleton className="h-[200px] rounded-lg" />
+          <Skeleton className="h-[200px] rounded-lg" />
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          <Skeleton className="h-[108px] rounded-lg" />
+          <Skeleton className="h-[108px] rounded-lg" />
+        </div>
+        <div className="grid grid-cols-1 gap-6">
+          <Skeleton className="h-[380px] rounded-lg" />
+        </div>
+      </div>
+    );
+  }
 
   const today = new Date();
   const currentYear = today.getFullYear();
@@ -195,7 +222,7 @@ export default function DashboardPage() {
       }
     });
 
-    return data.slice(0, today.getMonth() + 1);
+    return data.slice(0, new Date().getMonth() + 1);
   }, [store.employees, currentYear]);
   
   const employeesEndingTrial = React.useMemo(() => {
