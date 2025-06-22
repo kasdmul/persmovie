@@ -22,9 +22,11 @@ import React from 'react';
 import { Input } from '@/components/ui/input';
 import { store, notify, useStore } from '@/lib/store';
 import { Trash2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function SettingsPage() {
   useStore();
+  const { toast } = useToast();
   const [workWeekMode, setWorkWeekMode] = React.useState('monday-sunday');
   const [newDepartment, setNewDepartment] = React.useState('');
   const [newEntity, setNewEntity] = React.useState('');
@@ -33,7 +35,7 @@ export default function SettingsPage() {
   const handleSaveSettings = () => {
     // In a real app, this would save to a database.
     console.log('Paramètres sauvegardés:', { workWeekMode });
-    alert(`Mode de semaine de travail sauvegardé : ${workWeekMode}`);
+    toast({ description: "Paramètres de la semaine de travail sauvegardés." });
   };
 
   const handleAddDepartment = () => {
@@ -43,7 +45,7 @@ export default function SettingsPage() {
       notify();
       setNewDepartment('');
     } else {
-        alert('Ce département existe déjà ou le champ est vide.');
+        toast({ variant: "destructive", description: "Ce département existe déjà ou le champ est vide." });
     }
   };
 
@@ -59,7 +61,7 @@ export default function SettingsPage() {
       notify();
       setNewEntity('');
     } else {
-        alert('Cette entité existe déjà ou le champ est vide.');
+        toast({ variant: "destructive", description: "Cette entité existe déjà ou le champ est vide." });
     }
   };
 
@@ -75,7 +77,7 @@ export default function SettingsPage() {
       notify();
       setNewWorkLocation('');
     } else {
-        alert('Ce lieu de travail existe déjà ou le champ est vide.');
+        toast({ variant: "destructive", description: "Ce lieu de travail existe déjà ou le champ est vide." });
     }
   };
 
