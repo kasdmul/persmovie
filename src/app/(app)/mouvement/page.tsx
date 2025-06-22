@@ -25,9 +25,13 @@ function SalaryChangeContent() {
   const { toast } = useToast();
 
   const [selectedMatricule, setSelectedMatricule] = React.useState<string | undefined>();
-  const [date, setDate] = React.useState<Date | undefined>(new Date());
+  const [date, setDate] = React.useState<Date | undefined>();
   const [newSalary, setNewSalary] = React.useState('');
   const [reason, setReason] = React.useState('');
+
+  React.useEffect(() => {
+    setDate(new Date());
+  }, []);
 
   const selectedEmployee = store.employees.find(e => e.matricule === selectedMatricule);
 
@@ -190,9 +194,13 @@ function FunctionChangeContent() {
   const { toast } = useToast();
 
   const [selectedMatricule, setSelectedMatricule] = React.useState<string | undefined>();
-  const [date, setDate] = React.useState<Date | undefined>(new Date());
+  const [date, setDate] = React.useState<Date | undefined>();
   const [newFunction, setNewFunction] = React.useState('');
   const [reason, setReason] = React.useState('');
+
+  React.useEffect(() => {
+    setDate(new Date());
+  }, []);
 
   const selectedEmployee = store.employees.find(e => e.matricule === selectedMatricule);
   
@@ -345,9 +353,13 @@ function ContractChangeContent() {
   const { toast } = useToast();
 
   const [selectedMatricule, setSelectedMatricule] = React.useState<string | undefined>();
-  const [date, setDate] = React.useState<Date | undefined>(new Date());
+  const [date, setDate] = React.useState<Date | undefined>();
   const [newContractType, setNewContractType] = React.useState<string | undefined>();
   const [reason, setReason] = React.useState('');
+
+  React.useEffect(() => {
+    setDate(new Date());
+  }, []);
 
   const selectedEmployee = store.employees.find(e => e.matricule === selectedMatricule);
   
@@ -511,9 +523,13 @@ function DepartmentChangeContent() {
   const { toast } = useToast();
 
   const [selectedMatricule, setSelectedMatricule] = React.useState<string | undefined>();
-  const [date, setDate] = React.useState<Date | undefined>(new Date());
+  const [date, setDate] = React.useState<Date | undefined>();
   const [newDepartment, setNewDepartment] = React.useState<string | undefined>();
   const [reason, setReason] = React.useState('');
+
+  React.useEffect(() => {
+    setDate(new Date());
+  }, []);
 
   const selectedEmployee = store.employees.find(e => e.matricule === selectedMatricule);
   
@@ -675,9 +691,13 @@ function EntityChangeContent() {
   const { toast } = useToast();
 
   const [selectedMatricule, setSelectedMatricule] = React.useState<string | undefined>();
-  const [date, setDate] = React.useState<Date | undefined>(new Date());
+  const [date, setDate] = React.useState<Date | undefined>();
   const [newEntity, setNewEntity] = React.useState<string | undefined>();
   const [reason, setReason] = React.useState('');
+
+  React.useEffect(() => {
+    setDate(new Date());
+  }, []);
 
   const selectedEmployee = store.employees.find(e => e.matricule === selectedMatricule);
   
@@ -839,12 +859,16 @@ function WorkLocationChangeContent() {
   const { toast } = useToast();
 
   const [selectedMatricule, setSelectedMatricule] = React.useState<string | undefined>();
-  const [date, setDate] = React.useState<Date | undefined>(new Date());
+  const [date, setDate] = React.useState<Date | undefined>();
   const [newWorkLocation, setNewWorkLocation] = React.useState<string | undefined>();
   const [reason, setReason] = React.useState('');
   const [droitPrimeEloignement, setDroitPrimeEloignement] = React.useState(false);
   const [pourcentagePrime, setPourcentagePrime] = React.useState<string>('');
   const [dureeAffectationMois, setDureeAffectationMois] = React.useState<string>('');
+
+  React.useEffect(() => {
+    setDate(new Date());
+  }, []);
 
   const selectedEmployee = store.employees.find(e => e.matricule === selectedMatricule);
   
