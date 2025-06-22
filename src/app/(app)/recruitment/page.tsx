@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -61,10 +62,14 @@ import React from 'react';
 import { store, notify, useStore, type OpenPosition } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
+import { useDebounce } from '@/hooks/use-debounce';
 
 export default function RecruitmentPage() {
   useStore();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = React.useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [editingPosition, setEditingPosition] = React.useState<OpenPosition | null>(null);
 
@@ -117,7 +122,7 @@ export default function RecruitmentPage() {
     const cost = addCostRef.current?.value;
 
     if (!title || !addType || !addOpeningDate || !description) {
-      alert('Veuillez remplir tous les champs obligatoires.');
+      toast({ variant: "destructive", description: "Veuillez remplir tous les champs obligatoires." });
       return;
     }
 
@@ -139,7 +144,7 @@ export default function RecruitmentPage() {
   const handleUpdatePosition = (event: React.FormEvent) => {
     event.preventDefault();
     if (!editingPosition || !editTitle || !editType || !editOpeningDate || !editStatus || !editDescription) {
-      alert("Veuillez remplir tous les champs obligatoires.");
+      toast({ variant: "destructive", description: "Veuillez remplir tous les champs obligatoires." });
       return;
     }
 
@@ -184,11 +189,13 @@ export default function RecruitmentPage() {
     }
   };
 
-  const filteredPositions = store.openPositions.filter(
-    (position) =>
-      position.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      position.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredPositions = React.useMemo(() => {
+    return store.openPositions.filter(
+      (position) =>
+        position.title.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        position.description.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+    );
+  }, [store.openPositions, debouncedSearchTerm]);
 
   return (
     <>
