@@ -4,7 +4,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 
 // Path to the db.json file
-const dbPath = path.join(process.cwd(), 'data', 'db.json');
+const dbPath = path.join(process.cwd(), 'db.json');
 
 // Default empty structure, similar to the initial state in the store.
 const emptyData = {
@@ -25,8 +25,6 @@ const emptyData = {
 
 async function getData() {
   try {
-    // Ensure the directory exists.
-    await fs.mkdir(path.dirname(dbPath), { recursive: true });
     const fileContents = await fs.readFile(dbPath, 'utf8');
     const data = JSON.parse(fileContents);
     return { ...emptyData, ...data };
@@ -64,8 +62,6 @@ export async function POST(request: Request) {
         data.currentUser = null;
     }
     
-    // Ensure the directory exists before writing.
-    await fs.mkdir(path.dirname(dbPath), { recursive: true });
     await fs.writeFile(dbPath, JSON.stringify(data, null, 2), 'utf8');
 
     return NextResponse.json({ message: 'Data saved successfully.' });
