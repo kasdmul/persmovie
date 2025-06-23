@@ -78,6 +78,8 @@ import Papa from 'papaparse';
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
 
+const ITEMS_PER_PAGE = 15;
+
 export default function PersonnelPage() {
   const { currentUser } = useStore();
   const { toast } = useToast();
@@ -88,6 +90,7 @@ export default function PersonnelPage() {
   const [editingEmployee, setEditingEmployee] = React.useState<Employee | null>(
     null
   );
+  const [currentPage, setCurrentPage] = React.useState(1);
 
   // --- Add Form State ---
   const matriculeInputRef = React.useRef<HTMLInputElement>(null);
@@ -95,11 +98,11 @@ export default function PersonnelPage() {
   const emailInputRef = React.useRef<HTMLInputElement>(null);
   const posteInputRef = React.useRef<HTMLInputElement>(null);
   const periodeEssaiInputRef = React.useRef<HTMLInputElement>(null);
-  const [addSexe, setAddSexe] = React.useState<Employee['sexe']>();
+  const [addSexe, setAddSexe] = React.useState<Employee['sexe'] | ''>('');
   const [hireDate, setHireDate] = React.useState<Date | undefined>();
-  const [department, setDepartment] = React.useState<string>();
-  const [entity, setEntity] = React.useState<string>();
-  const [workLocation, setWorkLocation] = React.useState<string>();
+  const [department, setDepartment] = React.useState('');
+  const [entity, setEntity] = React.useState('');
+  const [workLocation, setWorkLocation] = React.useState('');
 
   // --- Edit Form State ---
   const [editingHireDate, setEditingHireDate] = React.useState<
@@ -109,12 +112,12 @@ export default function PersonnelPage() {
     Date | undefined
   >();
   const [editingStatus, setEditingStatus] = React.useState<
-    Employee['status'] | undefined
-  >();
-  const [editingSexe, setEditingSexe] = React.useState<Employee['sexe']>();
-  const [editingDepartment, setEditingDepartment] = React.useState<string | undefined>();
-  const [editingEntity, setEditingEntity] = React.useState<string | undefined>();
-  const [editingWorkLocation, setEditingWorkLocation] = React.useState<string | undefined>();
+    Employee['status'] | ''
+  >('');
+  const [editingSexe, setEditingSexe] = React.useState<Employee['sexe'] | ''>('');
+  const [editingDepartment, setEditingDepartment] = React.useState('');
+  const [editingEntity, setEditingEntity] = React.useState('');
+  const [editingWorkLocation, setEditingWorkLocation] = React.useState('');
 
 
   const csvInputRef = React.useRef<HTMLInputElement>(null);
@@ -251,19 +254,19 @@ export default function PersonnelPage() {
     if (editingEmployee) {
       setEditingHireDate(parseDate(editingEmployee.dateEmbauche));
       setEditingDepartureDate(parseDate(editingEmployee.dateDepart));
-      setEditingStatus(editingEmployee.status);
-      setEditingSexe(editingEmployee.sexe);
-      setEditingDepartment(editingEmployee.departement);
-      setEditingEntity(editingEmployee.entite);
-      setEditingWorkLocation(editingEmployee.lieuTravail);
+      setEditingStatus(editingEmployee.status || 'Actif');
+      setEditingSexe(editingEmployee.sexe || 'N/A');
+      setEditingDepartment(editingEmployee.departement || '');
+      setEditingEntity(editingEmployee.entite || '');
+      setEditingWorkLocation(editingEmployee.lieuTravail || '');
     } else {
       setEditingHireDate(undefined);
       setEditingDepartureDate(undefined);
-      setEditingStatus(undefined);
-      setEditingSexe(undefined);
-      setEditingDepartment(undefined);
-      setEditingEntity(undefined);
-      setEditingWorkLocation(undefined);
+      setEditingStatus('');
+      setEditingSexe('');
+      setEditingDepartment('');
+      setEditingEntity('');
+      setEditingWorkLocation('');
     }
   }, [editingEmployee]);
 
@@ -275,7 +278,7 @@ export default function PersonnelPage() {
         `E${Math.floor(Math.random() * 1000)}`,
       noms: nomsInputRef.current?.value || '',
       email: emailInputRef.current?.value || '',
-      sexe: addSexe || 'N/A',
+      sexe: addSexe as Employee['sexe'] || 'N/A',
       entite: entity || 'N/A',
       departement: department || 'N/A',
       lieuTravail: workLocation || 'N/A',
@@ -294,10 +297,10 @@ export default function PersonnelPage() {
       if (matriculeInputRef.current) matriculeInputRef.current.value = '';
       if (nomsInputRef.current) nomsInputRef.current.value = '';
       if (emailInputRef.current) emailInputRef.current.value = '';
-      setAddSexe(undefined);
-      setEntity(undefined);
-      setDepartment(undefined);
-      setWorkLocation(undefined);
+      setAddSexe('');
+      setEntity('');
+      setDepartment('');
+      setWorkLocation('');
       if (posteInputRef.current) posteInputRef.current.value = '';
       if (periodeEssaiInputRef.current)
         periodeEssaiInputRef.current.value = '';
@@ -307,7 +310,7 @@ export default function PersonnelPage() {
 
   const handleUpdateEmployee = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!editingEmployee || !editingStatus) return;
+    if (!editingEmployee) return;
 
     const form = event.target as HTMLFormElement;
     const formData = new FormData(form);
@@ -333,7 +336,7 @@ export default function PersonnelPage() {
         (formData.get('periodeEssai-edit') as string) || '0',
         10
       ),
-      status: editingStatus,
+      status: editingStatus as Employee['status'] || editingEmployee.status,
       dateDepart:
         editingStatus === 'Parti' && finalDepartureDate
           ? format(finalDepartureDate, 'dd/MM/yyyy')
@@ -387,6 +390,17 @@ export default function PersonnelPage() {
         employee.status.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
     );
   }, [store.employees, debouncedSearchTerm]);
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm]);
+  
+  const totalPages = Math.ceil(filteredEmployees.length / ITEMS_PER_PAGE);
+
+  const paginatedEmployees = React.useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredEmployees.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredEmployees, currentPage]);
 
   return (
     <>
@@ -656,101 +670,135 @@ export default function PersonnelPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredEmployees.map((employee) => (
-                  <TableRow key={employee.matricule}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9">
-                          <AvatarImage
-                            src={`https://placehold.co/40x40.png`}
-                            alt="Avatar"
-                            data-ai-hint="person"
-                          />
-                          <AvatarFallback>
-                            {employee.noms.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="grid gap-0.5">
-                          <p className="font-medium">{employee.noms}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {employee.email}
-                          </p>
+                {paginatedEmployees.length > 0 ? (
+                  paginatedEmployees.map((employee) => (
+                    <TableRow key={employee.matricule}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-9 w-9">
+                            <AvatarImage
+                              src={`https://placehold.co/40x40.png`}
+                              alt="Avatar"
+                              data-ai-hint="person"
+                            />
+                            <AvatarFallback>
+                              {employee.noms.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="grid gap-0.5">
+                            <p className="font-medium">{employee.noms}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {employee.email}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{employee.sexe}</TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {employee.departement}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell">{employee.lieuTravail}</TableCell>
-                    <TableCell>{employee.poste}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={getStatusBadgeVariant(employee.status) as any}
-                      >
-                        {employee.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            aria-haspopup="true"
-                            size="icon"
-                            variant="ghost"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem
-                            onClick={() => setEditingEmployee(employee)}
-                          >
-                            Modifier
-                          </DropdownMenuItem>
-                          {canManage && (
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <DropdownMenuItem
-                                    onSelect={(e) => e.preventDefault()}
-                                    className="text-destructive"
-                                  >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Supprimer
-                                  </DropdownMenuItem>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>
-                                      Êtes-vous sûr ?
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Cette action est irréversible. L'employé sera
-                                      définitivement supprimé.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Annuler</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() =>
-                                        handleDeleteEmployee(employee.matricule)
-                                      }
+                      </TableCell>
+                      <TableCell>{employee.sexe}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {employee.departement}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">{employee.lieuTravail}</TableCell>
+                      <TableCell>{employee.poste}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={getStatusBadgeVariant(employee.status) as any}
+                        >
+                          {employee.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              aria-haspopup="true"
+                              size="icon"
+                              variant="ghost"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Toggle menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem
+                              onClick={() => setEditingEmployee(employee)}
+                            >
+                              Modifier
+                            </DropdownMenuItem>
+                            {canManage && (
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <DropdownMenuItem
+                                      onSelect={(e) => e.preventDefault()}
+                                      className="text-destructive"
                                     >
-                                      Confirmer
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                                      <Trash2 className="mr-2 h-4 w-4" />
+                                      Supprimer
+                                    </DropdownMenuItem>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>
+                                        Êtes-vous sûr ?
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Cette action est irréversible. L'employé sera
+                                        définitivement supprimé.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Annuler</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() =>
+                                          handleDeleteEmployee(employee.matricule)
+                                        }
+                                      >
+                                        Confirmer
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center">
+                      Aucun résultat.
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
+          </div>
+           <div className="flex items-center justify-between space-x-2 py-4">
+            <div className="text-sm text-muted-foreground">
+              {filteredEmployees.length} employé(s) trouvé(s).
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-muted-foreground">
+                  Page {currentPage} sur {totalPages > 0 ? totalPages : 1}
+              </span>
+              <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                  disabled={currentPage === 1}
+              >
+                  Précédent
+              </Button>
+              <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+                  disabled={currentPage === totalPages || totalPages === 0}
+              >
+                  Suivant
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -884,8 +932,8 @@ export default function PersonnelPage() {
                 <Select
                   name="status-edit"
                   value={editingStatus}
-                  onValueChange={(value: Employee['status']) =>
-                    setEditingStatus(value)
+                  onValueChange={(value) =>
+                    setEditingStatus(value as Employee['status'])
                   }
                 >
                   <SelectTrigger className="col-span-3">
