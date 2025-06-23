@@ -20,7 +20,7 @@ import {
   AlertTriangle,
   Clock,
 } from 'lucide-react';
-import { useStore, store, type Employee } from '@/lib/store';
+import { useStore, type Employee } from '@/lib/store';
 import {
   ChartContainer,
   ChartTooltip,
@@ -104,123 +104,125 @@ function DashboardSkeleton() {
   );
 }
 
+// All hooks must be called at the top level, unconditionally.
 export default function DashboardPage() {
-  useStore(); // Subscribe to store changes
-  const [isClient, setIsClient] = React.useState(false);
+  const { isLoaded, store } = useStore();
+  const [clientData, setClientData] = React.useState<any>(null);
 
   React.useEffect(() => {
-    setIsClient(true);
-  }, []);
+    if (isLoaded) {
+        const today = new Date();
+        const currentYear = today.getFullYear();
+        const currentMonth = today.getMonth();
 
-  if (!isClient) {
+        const newHiresThisYearList = store.employees.filter((employee) => {
+          const hireDate = parseFlexibleDate(employee.dateEmbauche);
+          return hireDate ? hireDate.getFullYear() === currentYear : false;
+        });
+        const departuresThisYearList = store.employees.filter((employee) => {
+          if (employee.status !== 'Parti') return false;
+          const departureDate = parseFlexibleDate(employee.dateDepart || '');
+          return departureDate ? departureDate.getFullYear() === currentYear : false;
+        });
+        
+        const newHiresThisMonth = newHiresThisYearList.filter((employee) => {
+          const hireDate = parseFlexibleDate(employee.dateEmbauche);
+          return hireDate ? hireDate.getMonth() === currentMonth : false;
+        }).length;
+
+        const departuresThisMonth = departuresThisYearList.filter((employee) => {
+          if (employee.status !== 'Parti') return false;
+          const departureDate = parseFlexibleDate(employee.dateDepart || '');
+          return departureDate ? departureDate.getMonth() === currentMonth : false;
+        }).length;
+
+        const activeEmployees = store.employees.filter((e) => e.status === 'Actif');
+        const totalEmployees = activeEmployees.length;
+        const newHiresThisYear = newHiresThisYearList.length;
+        const departuresThisYear = departuresThisYearList.length;
+
+        const employeesAtStartOfYear = totalEmployees - newHiresThisYear + departuresThisYear;
+        const averageEmployeesYear = (employeesAtStartOfYear + totalEmployees) / 2;
+        const employeesAtStartOfMonth = totalEmployees - newHiresThisMonth + departuresThisMonth;
+        const averageEmployeesMonth = (employeesAtStartOfMonth + totalEmployees) / 2;
+
+        const metrics = {
+          newHiresThisYear,
+          departuresThisYear,
+          openPositions: store.openPositions.filter((p) => p.status === 'Ouvert').length,
+          totalDepartments: new Set(activeEmployees.map((e) => e.departement).filter((d) => d && d.trim() && d.trim() !== 'N/A')).size,
+          totalEmployees,
+          turnoverRateYearly: averageEmployeesYear > 0 ? (departuresThisYear / averageEmployeesYear) * 100 : 0,
+          turnoverRateMonthly: averageEmployeesMonth > 0 ? (departuresThisMonth / averageEmployeesMonth) * 100 : 0,
+        };
+
+        const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+        const monthlyMovementsData = monthNames.map((month) => ({ name: month, Entrées: 0, Sorties: 0 }));
+        store.employees.forEach((employee) => {
+          const hireDate = parseFlexibleDate(employee.dateEmbauche);
+          if (hireDate && hireDate.getFullYear() === currentYear) {
+            monthlyMovementsData[hireDate.getMonth()]['Entrées'] += 1;
+          }
+          if (employee.status === 'Parti') {
+            const departureDate = parseFlexibleDate(employee.dateDepart || '');
+            if (departureDate && departureDate.getFullYear() === currentYear) {
+              monthlyMovementsData[departureDate.getMonth()]['Sorties'] += 1;
+            }
+          }
+        });
+        const monthlyMovements = monthlyMovementsData.slice(0, currentMonth + 1);
+
+        const employeesEndingTrial = store.employees
+          .filter((employee) => employee.status === 'Actif' && employee.periodeEssai > 0)
+          .map((employee) => {
+            const hireDate = parseFlexibleDate(employee.dateEmbauche);
+            if (!hireDate) return null;
+            const trialEndDate = addMonths(hireDate, employee.periodeEssai);
+            const daysRemaining = differenceInDays(trialEndDate, today);
+            if (daysRemaining >= 0 && daysRemaining <= 15) {
+              return { ...employee, trialEndDate, daysRemaining };
+            }
+            return null;
+          })
+          .filter((e): e is NonNullable<typeof e> => e !== null)
+          .sort((a, b) => a.daysRemaining - b.daysRemaining);
+
+        const alerts: { employee: Employee; location: string; duration: number }[] = [];
+        const activeEmps = store.employees.filter((e) => e.status === 'Actif');
+        const lastChangeDateMap = new Map<string, Date>();
+        store.workLocationHistory.forEach(change => {
+          const changeDate = parseFlexibleDate(change.date);
+          if (!changeDate) return;
+          const existingDate = lastChangeDateMap.get(change.matricule);
+          if (!existingDate || changeDate > existingDate) {
+            lastChangeDateMap.set(change.matricule, changeDate);
+          }
+        });
+        for (const employee of activeEmps) {
+          const assignmentStartDate = lastChangeDateMap.get(employee.matricule);
+          if (assignmentStartDate) {
+            const durationInMonths = differenceInMonths(today, assignmentStartDate);
+            if (durationInMonths >= 48) {
+              alerts.push({ employee, location: employee.lieuTravail, duration: durationInMonths });
+            }
+          }
+        }
+        const employeesWithLongAssignments = alerts.sort((a, b) => b.duration - a.duration);
+
+        setClientData({
+          metrics,
+          monthlyMovements,
+          employeesEndingTrial,
+          employeesWithLongAssignments,
+        });
+    }
+  }, [isLoaded, store.employees, store.openPositions, store.workLocationHistory]);
+
+  if (!isLoaded || !clientData) {
     return <DashboardSkeleton />;
   }
   
-  // --- Client-side Calculations ---
-  // All calculations that depend on the current date are now performed only on the client,
-  // after the component has mounted. This prevents hydration errors.
-
-  const today = new Date();
-  const currentYear = today.getFullYear();
-  const currentMonth = today.getMonth();
-
-  const newHiresThisYear = store.employees.filter((employee) => {
-    const hireDate = parseFlexibleDate(employee.dateEmbauche);
-    return hireDate ? hireDate.getFullYear() === currentYear : false;
-  }).length;
-
-  const departuresThisYear = store.employees.filter((employee) => {
-    if (employee.status !== 'Parti') return false;
-    const departureDate = parseFlexibleDate(employee.dateDepart || '');
-    return departureDate ? departureDate.getFullYear() === currentYear : false;
-  }).length;
-  
-  const newHiresThisMonth = store.employees.filter((employee) => {
-    const hireDate = parseFlexibleDate(employee.dateEmbauche);
-    return hireDate ? (hireDate.getFullYear() === currentYear && hireDate.getMonth() === currentMonth) : false;
-  }).length;
-
-  const departuresThisMonth = store.employees.filter((employee) => {
-    if (employee.status !== 'Parti') return false;
-    const departureDate = parseFlexibleDate(employee.dateDepart || '');
-    return departureDate ? (departureDate.getFullYear() === currentYear && departureDate.getMonth() === currentMonth) : false;
-  }).length;
-
-  const openPositions = store.openPositions.filter((p) => p.status === 'Ouvert').length;
-
-  const totalDepartments = new Set(
-    store.employees
-      .filter((e) => e.status === 'Actif')
-      .map((e) => e.departement)
-      .filter((d) => d && d.trim() && d.trim() !== 'N/A')
-  ).size;
-  
-  const monthlyMovements = (() => {
-    const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
-    const data = monthNames.map((month) => ({ name: month, Entrées: 0, Sorties: 0 }));
-
-    store.employees.forEach((employee) => {
-      const hireDate = parseFlexibleDate(employee.dateEmbauche);
-      if (hireDate && hireDate.getFullYear() === currentYear) {
-        data[hireDate.getMonth()]['Entrées'] += 1;
-      }
-      if (employee.status === 'Parti') {
-        const departureDate = parseFlexibleDate(employee.dateDepart || '');
-        if (departureDate && departureDate.getFullYear() === currentYear) {
-          data[departureDate.getMonth()]['Sorties'] += 1;
-        }
-      }
-    });
-    return data.slice(0, currentMonth + 1);
-  })();
-  
-  const employeesEndingTrial = store.employees
-    .filter((employee) => employee.status === 'Actif' && employee.periodeEssai > 0)
-    .map((employee) => {
-      const hireDate = parseFlexibleDate(employee.dateEmbauche);
-      if (!hireDate) return null;
-      const trialEndDate = addMonths(hireDate, employee.periodeEssai);
-      const daysRemaining = differenceInDays(trialEndDate, today);
-      if (daysRemaining >= 0 && daysRemaining <= 15) {
-        return { ...employee, trialEndDate, daysRemaining };
-      }
-      return null;
-    })
-    .filter((e): e is NonNullable<typeof e> => e !== null)
-    .sort((a, b) => a.daysRemaining - b.daysRemaining);
-  
-  const employeesWithLongAssignments = (() => {
-    const alerts: { employee: Employee; location: string; duration: number }[] = [];
-    const activeEmployees = store.employees.filter((e) => e.status === 'Actif');
-    const lastChangeDateMap = new Map<string, Date>();
-    store.workLocationHistory.forEach(change => {
-        const changeDate = parseFlexibleDate(change.date);
-        if (!changeDate) return;
-        const existingDate = lastChangeDateMap.get(change.matricule);
-        if (!existingDate || changeDate > existingDate) {
-            lastChangeDateMap.set(change.matricule, changeDate);
-        }
-    });
-
-    for (const employee of activeEmployees) {
-        const assignmentStartDate = lastChangeDateMap.get(employee.matricule);
-        if (assignmentStartDate) {
-            const durationInMonths = differenceInMonths(today, assignmentStartDate);
-            if (durationInMonths >= 48) {
-                alerts.push({ employee, location: employee.lieuTravail, duration: durationInMonths });
-            }
-        }
-    }
-    return alerts.sort((a, b) => b.duration - a.duration);
-  })();
-
-  const totalEmployees = store.employees.filter((e) => e.status === 'Actif').length;
-  const employeesAtStartOfYear = totalEmployees - newHiresThisYear + departuresThisYear;
-  const averageEmployeesYear = (employeesAtStartOfYear + totalEmployees) / 2;
-  const turnoverRateYearly = averageEmployeesYear > 0 ? (departuresThisYear / averageEmployeesYear) * 100 : 0;
-  const employeesAtStartOfMonth = totalEmployees - newHiresThisMonth + departuresThisMonth;
-  const averageEmployeesMonth = (employeesAtStartOfMonth + totalEmployees) / 2;
-  const turnoverRateMonthly = averageEmployeesMonth > 0 ? (departuresThisMonth / averageEmployeesMonth) * 100 : 0;
+  const { metrics, monthlyMovements, employeesEndingTrial, employeesWithLongAssignments } = clientData;
 
   return (
     <div className="flex flex-col gap-6">
@@ -233,7 +235,7 @@ export default function DashboardPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalEmployees}</div>
+            <div className="text-2xl font-bold">{metrics.totalEmployees}</div>
             <p className="text-xs text-muted-foreground">Statistique globale</p>
           </CardContent>
         </Card>
@@ -245,7 +247,7 @@ export default function DashboardPage() {
             <UserPlus className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+{newHiresThisYear}</div>
+            <div className="text-2xl font-bold">+{metrics.newHiresThisYear}</div>
             <p className="text-xs text-muted-foreground">Cette année</p>
           </CardContent>
         </Card>
@@ -255,7 +257,7 @@ export default function DashboardPage() {
             <UserMinus className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">-{departuresThisYear}</div>
+            <div className="text-2xl font-bold">-{metrics.departuresThisYear}</div>
             <p className="text-xs text-muted-foreground">Cette année</p>
           </CardContent>
         </Card>
@@ -268,7 +270,7 @@ export default function DashboardPage() {
               <Briefcase className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{openPositions}</div>
+              <div className="text-2xl font-bold">{metrics.openPositions}</div>
               <p className="text-xs text-muted-foreground">
                 Cliquez pour voir les recrutements
               </p>
@@ -281,7 +283,7 @@ export default function DashboardPage() {
             <Building className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalDepartments}</div>
+            <div className="text-2xl font-bold">{metrics.totalDepartments}</div>
             <p className="text-xs text-muted-foreground">Nombre total</p>
           </CardContent>
         </Card>
@@ -360,7 +362,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {turnoverRateYearly.toFixed(2)}%
+              {metrics.turnoverRateYearly.toFixed(2)}%
             </div>
             <p className="text-xs text-muted-foreground">
               Basé sur les départs de cette année
@@ -376,7 +378,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {turnoverRateMonthly.toFixed(2)}%
+              {metrics.turnoverRateMonthly.toFixed(2)}%
             </div>
             <p className="text-xs text-muted-foreground">Pour le mois en cours</p>
           </CardContent>
@@ -436,3 +438,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
