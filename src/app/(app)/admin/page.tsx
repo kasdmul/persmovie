@@ -71,7 +71,7 @@ export default function AdminPage() {
   // Add User State
   const [newUserName, setNewUserName] = React.useState('');
   const [newUserEmail, setNewUserEmail] = React.useState('');
-  const [newUserRole, setNewUserRole] = React.useState<User['role']>();
+  const [newUserRole, setNewUserRole] = React.useState<User['role'] | ''>('');
   const [newUserPassword, setNewUserPassword] = React.useState('');
 
   // Edit User State
@@ -105,7 +105,7 @@ export default function AdminPage() {
   const resetAddUserForm = () => {
     setNewUserName('');
     setNewUserEmail('');
-    setNewUserRole(undefined);
+    setNewUserRole('');
     setNewUserPassword('');
     setIsAddUserOpen(false);
   };
@@ -122,7 +122,7 @@ export default function AdminPage() {
     const newUser: User = {
       name: newUserName,
       email: newUserEmail,
-      role: newUserRole,
+      role: newUserRole as User['role'],
       password: newUserPassword,
     };
     store.users.push(newUser);
@@ -201,7 +201,7 @@ export default function AdminPage() {
       ...editingUser,
       name: editForm.name,
       email: editForm.email,
-      role: editForm.role,
+      role: editForm.role || editingUser.role,
       password: editForm.password ? editForm.password : editingUser.password,
     };
 
@@ -218,10 +218,11 @@ export default function AdminPage() {
   };
 
   const displayedUsers = React.useMemo(() => {
-    return currentUser?.role === 'admin'
+    if (!currentUser) return [];
+    return currentUser.role === 'admin'
       ? store.users.filter((u) => u.role !== 'superadmin')
       : store.users;
-  }, [currentUser?.role, store.users]);
+  }, [currentUser, store.users]);
 
   const canManage =
     currentUser?.role === 'superadmin' || currentUser?.role === 'admin';
@@ -316,7 +317,6 @@ export default function AdminPage() {
                           onValueChange={(v) =>
                             setNewUserRole(v as User['role'])
                           }
-                          required
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Sélectionner un rôle" />
@@ -536,7 +536,6 @@ export default function AdminPage() {
                 <Select
                   value={editForm.role}
                   onValueChange={handleEditRoleChange}
-                  required
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionner un rôle" />
