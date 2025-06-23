@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -23,7 +24,7 @@ function SalaryChangeContent() {
   useStore();
   const { toast } = useToast();
 
-  const [selectedMatricule, setSelectedMatricule] = React.useState<string | undefined>();
+  const [selectedMatricule, setSelectedMatricule] = React.useState('');
   const [date, setDate] = React.useState<Date | undefined>();
   const [newSalary, setNewSalary] = React.useState('');
   const [reason, setReason] = React.useState('');
@@ -35,7 +36,7 @@ function SalaryChangeContent() {
   const selectedEmployee = store.employees.find(e => e.matricule === selectedMatricule);
 
   const resetFields = () => {
-    setSelectedMatricule(undefined);
+    setSelectedMatricule('');
     setDate(new Date());
     setNewSalary('');
     setReason('');
@@ -192,7 +193,7 @@ function FunctionChangeContent() {
   useStore();
   const { toast } = useToast();
 
-  const [selectedMatricule, setSelectedMatricule] = React.useState<string | undefined>();
+  const [selectedMatricule, setSelectedMatricule] = React.useState('');
   const [date, setDate] = React.useState<Date | undefined>();
   const [newFunction, setNewFunction] = React.useState('');
   const [reason, setReason] = React.useState('');
@@ -204,7 +205,7 @@ function FunctionChangeContent() {
   const selectedEmployee = store.employees.find(e => e.matricule === selectedMatricule);
   
   const resetFields = () => {
-    setSelectedMatricule(undefined);
+    setSelectedMatricule('');
     setDate(new Date());
     setNewFunction('');
     setReason('');
@@ -351,9 +352,9 @@ function ContractChangeContent() {
   useStore();
   const { toast } = useToast();
 
-  const [selectedMatricule, setSelectedMatricule] = React.useState<string | undefined>();
+  const [selectedMatricule, setSelectedMatricule] = React.useState('');
   const [date, setDate] = React.useState<Date | undefined>();
-  const [newContractType, setNewContractType] = React.useState<string | undefined>();
+  const [newContractType, setNewContractType] = React.useState('');
   const [reason, setReason] = React.useState('');
 
   React.useEffect(() => {
@@ -363,9 +364,9 @@ function ContractChangeContent() {
   const selectedEmployee = store.employees.find(e => e.matricule === selectedMatricule);
   
   const resetFields = () => {
-    setSelectedMatricule(undefined);
+    setSelectedMatricule('');
     setDate(new Date());
-    setNewContractType(undefined);
+    setNewContractType('');
     setReason('');
   }
 
@@ -521,9 +522,9 @@ function DepartmentChangeContent() {
   useStore();
   const { toast } = useToast();
 
-  const [selectedMatricule, setSelectedMatricule] = React.useState<string | undefined>();
+  const [selectedMatricule, setSelectedMatricule] = React.useState('');
   const [date, setDate] = React.useState<Date | undefined>();
-  const [newDepartment, setNewDepartment] = React.useState<string | undefined>();
+  const [newDepartment, setNewDepartment] = React.useState('');
   const [reason, setReason] = React.useState('');
 
   React.useEffect(() => {
@@ -533,9 +534,9 @@ function DepartmentChangeContent() {
   const selectedEmployee = store.employees.find(e => e.matricule === selectedMatricule);
   
   const resetFields = () => {
-    setSelectedMatricule(undefined);
+    setSelectedMatricule('');
     setDate(new Date());
-    setNewDepartment(undefined);
+    setNewDepartment('');
     setReason('');
   }
 
@@ -689,9 +690,9 @@ function EntityChangeContent() {
   useStore();
   const { toast } = useToast();
 
-  const [selectedMatricule, setSelectedMatricule] = React.useState<string | undefined>();
+  const [selectedMatricule, setSelectedMatricule] = React.useState('');
   const [date, setDate] = React.useState<Date | undefined>();
-  const [newEntity, setNewEntity] = React.useState<string | undefined>();
+  const [newEntity, setNewEntity] = React.useState('');
   const [reason, setReason] = React.useState('');
 
   React.useEffect(() => {
@@ -701,9 +702,9 @@ function EntityChangeContent() {
   const selectedEmployee = store.employees.find(e => e.matricule === selectedMatricule);
   
   const resetFields = () => {
-    setSelectedMatricule(undefined);
+    setSelectedMatricule('');
     setDate(new Date());
-    setNewEntity(undefined);
+    setNewEntity('');
     setReason('');
   }
 
@@ -857,9 +858,9 @@ function WorkLocationChangeContent() {
   useStore();
   const { toast } = useToast();
 
-  const [selectedMatricule, setSelectedMatricule] = React.useState<string | undefined>();
+  const [selectedMatricule, setSelectedMatricule] = React.useState('');
   const [date, setDate] = React.useState<Date | undefined>();
-  const [newWorkLocation, setNewWorkLocation] = React.useState<string | undefined>();
+  const [newWorkLocation, setNewWorkLocation] = React.useState('');
   const [reason, setReason] = React.useState('');
   const [droitPrimeEloignement, setDroitPrimeEloignement] = React.useState(false);
   const [pourcentagePrime, setPourcentagePrime] = React.useState<string>('');
@@ -872,9 +873,9 @@ function WorkLocationChangeContent() {
   const selectedEmployee = store.employees.find(e => e.matricule === selectedMatricule);
   
   const resetFields = () => {
-    setSelectedMatricule(undefined);
+    setSelectedMatricule('');
     setDate(new Date());
-    setNewWorkLocation(undefined);
+    setNewWorkLocation('');
     setReason('');
     setDroitPrimeEloignement(false);
     setPourcentagePrime('');
@@ -1230,25 +1231,25 @@ export default function MouvementPageContainer() {
             Historique Global
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="salaire" forceMount>
+        <TabsContent value="salaire">
           <SalaryChangeContent />
         </TabsContent>
-        <TabsContent value="fonction" forceMount>
+        <TabsContent value="fonction">
           <FunctionChangeContent />
         </TabsContent>
-         <TabsContent value="departement" forceMount>
+         <TabsContent value="departement">
           <DepartmentChangeContent />
         </TabsContent>
-        <TabsContent value="entite" forceMount>
+        <TabsContent value="entite">
           <EntityChangeContent />
         </TabsContent>
-        <TabsContent value="lieu-travail" forceMount>
+        <TabsContent value="lieu-travail">
           <WorkLocationChangeContent />
         </TabsContent>
-        <TabsContent value="contrat" forceMount>
+        <TabsContent value="contrat">
           <ContractChangeContent />
         </TabsContent>
-        <TabsContent value="historique" forceMount>
+        <TabsContent value="historique">
           <GlobalHistoryContent />
         </TabsContent>
       </Tabs>
