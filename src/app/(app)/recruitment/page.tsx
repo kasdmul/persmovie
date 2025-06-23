@@ -77,23 +77,23 @@ export default function RecruitmentPage() {
   const addTitleRef = React.useRef<HTMLInputElement>(null);
   const addDescriptionRef = React.useRef<HTMLTextAreaElement>(null);
   const addCostRef = React.useRef<HTMLInputElement>(null);
-  const [addType, setAddType] = React.useState<'Remplacement' | 'Création'>();
+  const [addType, setAddType] = React.useState<'Remplacement' | 'Création' | ''>('');
   const [addOpeningDate, setAddOpeningDate] = React.useState<Date>();
 
   // --- Edit Form State ---
   const [editTitle, setEditTitle] = React.useState('');
-  const [editType, setEditType] = React.useState<'Remplacement' | 'Création'>();
+  const [editType, setEditType] = React.useState<'Remplacement' | 'Création' | ''>('');
   const [editOpeningDate, setEditOpeningDate] = React.useState<Date>();
   const [editFilledDate, setEditFilledDate] = React.useState<Date | undefined>();
   const [editDescription, setEditDescription] = React.useState('');
-  const [editStatus, setEditStatus] = React.useState<'Ouvert' | 'Pourvu' | 'Annulé'>();
+  const [editStatus, setEditStatus] = React.useState<'Ouvert' | 'Pourvu' | 'Annulé' | ''>('');
   const [editCost, setEditCost] = React.useState<number | undefined>();
 
   const resetAddForm = () => {
     if (addTitleRef.current) addTitleRef.current.value = '';
     if (addDescriptionRef.current) addDescriptionRef.current.value = '';
     if (addCostRef.current) addCostRef.current.value = '';
-    setAddType(undefined);
+    setAddType('');
     setAddOpeningDate(undefined);
     setIsAddDialogOpen(false);
   };
@@ -101,7 +101,7 @@ export default function RecruitmentPage() {
   React.useEffect(() => {
     if (editingPosition) {
       setEditTitle(editingPosition.title);
-      setEditType(editingPosition.type);
+      setEditType(editingPosition.type || '');
       try {
         setEditOpeningDate(new Date(editingPosition.openingDate.split('/').reverse().join('-')));
         setEditFilledDate(editingPosition.filledDate ? new Date(editingPosition.filledDate.split('/').reverse().join('-')) : undefined);
@@ -110,7 +110,7 @@ export default function RecruitmentPage() {
         setEditFilledDate(undefined);
       }
       setEditDescription(editingPosition.description);
-      setEditStatus(editingPosition.status);
+      setEditStatus(editingPosition.status || '');
       setEditCost(editingPosition.cost);
     }
   }, [editingPosition]);
@@ -129,7 +129,7 @@ export default function RecruitmentPage() {
     const newPosition: OpenPosition = {
       id: Date.now().toString(),
       title,
-      type: addType,
+      type: addType as 'Remplacement' | 'Création',
       openingDate: format(addOpeningDate, 'dd/MM/yyyy'),
       description,
       status: 'Ouvert',
@@ -151,11 +151,11 @@ export default function RecruitmentPage() {
     const updatedPosition: OpenPosition = {
       ...editingPosition,
       title: editTitle,
-      type: editType,
+      type: editType as 'Remplacement' | 'Création',
       openingDate: format(editOpeningDate, 'dd/MM/yyyy'),
       filledDate: editFilledDate && editStatus === 'Pourvu' ? format(editFilledDate, 'dd/MM/yyyy') : undefined,
       description: editDescription,
-      status: editStatus,
+      status: editStatus as 'Ouvert' | 'Pourvu' | 'Annulé',
       cost: editCost,
     };
 
@@ -231,7 +231,7 @@ export default function RecruitmentPage() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="add-type">Type de Poste</Label>
-                        <Select value={addType} onValueChange={(v: 'Remplacement' | 'Création') => setAddType(v)} required>
+                        <Select value={addType} onValueChange={(v: 'Remplacement' | 'Création' | '') => setAddType(v)}>
                           <SelectTrigger id="add-type"><SelectValue placeholder="Sélectionner le type" /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Création">Création de poste</SelectItem>
@@ -374,7 +374,7 @@ export default function RecruitmentPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-type">Type de Poste</Label>
-                <Select value={editType} onValueChange={(v: 'Remplacement' | 'Création') => setEditType(v)} required>
+                <Select value={editType} onValueChange={(v) => setEditType(v as 'Remplacement' | 'Création' | '')}>
                   <SelectTrigger id="edit-type"><SelectValue placeholder="Sélectionner le type" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Création">Création de poste</SelectItem>
@@ -405,7 +405,7 @@ export default function RecruitmentPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-status">Statut</Label>
-                  <Select value={editStatus} onValueChange={(v: 'Ouvert' | 'Pourvu' | 'Annulé') => setEditStatus(v)} required>
+                  <Select value={editStatus} onValueChange={(v) => setEditStatus(v as 'Ouvert' | 'Pourvu' | 'Annulé' | '')}>
                     <SelectTrigger id="edit-status"><SelectValue placeholder="Sélectionner un statut" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Ouvert">Ouvert</SelectItem>
